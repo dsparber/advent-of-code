@@ -4,7 +4,7 @@ with open("input", "r") as f:
 
     count = 0
     for i in range(1, len(numbers) - 2):
-        if sum(numbers[i:(i+3)]) > sum(numbers[(i-1):(i+2)]):
+        if numbers[i+2] > numbers[i-1]:
             count += 1
 
     print(count)
