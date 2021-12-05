@@ -1,20 +1,14 @@
 
 with open("input", "r") as f:
-    lines = f.readlines()
-
     aim = 0
     depth, horizontal = 0, 0
-    for line in lines:
-        command, value_str = line.split(" ")
-        value = int(value_str)
 
-        if command == "down":
-            aim += value
-        if command == "up":
-            aim -= value
-        if command == "forward":
-            horizontal += value
-            depth += aim * value
+    for line in f.readlines():
+        match line.split():
+            case ["down", value]: aim += int(value)
+            case ["up", value]: aim -= int(value)
+            case ["forward", value]:
+                horizontal += int(value)
+                depth += aim * int(value)
 
-    print("depth = {}, horizontal = {}".format(depth, horizontal))
-    print("product = {}".format(depth * horizontal))
+    print("depth = {}, horizontal = {}, product = {}".format(depth, horizontal, depth * horizontal))
