@@ -1,4 +1,3 @@
-from sys import stdout
 
 index = dict(w=0, x=1, y=2, z=3)
 
