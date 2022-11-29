@@ -1,6 +1,7 @@
 import os
-from typing import Callable, Literal, Tuple, Iterable
+from typing import Callable, Literal, Tuple, Iterable, Optional
 
+import html2text
 import requests
 from bs4 import BeautifulSoup
 from colorama import Fore, Style
@@ -15,7 +16,7 @@ HEADERS = {"cookie": f"session={os.environ['SESSION_COOKIE']}", }
 def request_content(year: int, day: int, content_type: str) -> str:
     if content_type == 'input':
         url = f"https://adventofcode.com/{year}/day/{day}/input"
-    elif content_type == 'problem':
+    elif content_type == 'problem.md':
         url = f"https://adventofcode.com/{year}/day/{day}"
     else:
         raise AttributeError(f'Invalid {content_type = }')
@@ -25,29 +26,41 @@ def request_content(year: int, day: int, content_type: str) -> str:
     return response.text.strip()
 
 
-def fetch(year: int, day: int, content_type: str) -> str:
-    content = request_content(year, day, content_type)
-    if content_type == 'input':
+def fetch(year: int, day: int, input_file: str) -> str:
+    content = request_content(year, day, input_file)
+    if input_file == 'input':
         return content
-    elif content_type == 'problem':
+    elif input_file == 'problem.md':
         soup = BeautifulSoup(content, "html.parser")
-        return '\n\n\n'.join([a.text for a in soup.select('article')])
+        html_to_text = html2text.HTML2Text()
+        return '\n\n\n'.join([html_to_text.handle(str(a)) for a in soup.select('article')])
 
 
-def fetch_and_save(year: int, day: int, content_type: str) -> None:
-    print(f"🛷 Fetching {content_type} for {day} {year}")
-    content = fetch(year, day, content_type)
-    with open(f"{CURRENT_DIR}/{content_type}", "w") as text_file:
+def fetch_and_save(year: int, day: int, input_file: str) -> None:
+    print(f"🛷 Fetching {input_file} for {day} {year}")
+    content = fetch(year, day, input_file)
+    with open(f"{CURRENT_DIR}/{input_file}", "w") as text_file:
         text_file.write(content)
 
 
 def load_input(year: int, day: int) -> str:
-    for content_type in ['input', 'problem']:
-        if not os.path.exists(f"{CURRENT_DIR}/{content_type}"):
-            fetch_and_save(year, day, content_type)
+    for input_file in ['input', 'problem.md']:
+        if not os.path.exists(f"{CURRENT_DIR}/{input_file}"):
+            fetch_and_save(year, day, input_file)
 
     with open(f"{CURRENT_DIR}/input") as file:
         return file.read()
+
+
+def load_sample() -> Optional[Tuple[str, Iterable[int]]]:
+    path = f"{CURRENT_DIR}/sample"
+    if not os.path.exists(path):
+        return None
+
+    with open(path) as file:
+        sample_date = file.read()
+        sample_input, sample_output = sample_date.split('\n---\n')
+        return sample_input, [int(v) for v in sample_output.split('\n')]
 
 
 def submit(answer: int, level: int, year: int, day: int) -> None:
@@ -86,7 +99,7 @@ def test(answer_func: Callable[[str], Iterable[int]], cases: list[dict]) -> bool
     all_passed = True
 
     if not cases:
-        print("Livin' on the edge! No test cases defined.")
+        print(f"{Fore.YELLOW}🤷 No test cases defined.{Style.RESET_ALL}")
         return all_passed
 
     for tc in cases:
@@ -98,6 +111,24 @@ def test(answer_func: Callable[[str], Iterable[int]], cases: list[dict]) -> bool
             print(f"{Fore.RED}🔥 Test failed {Style.RESET_ALL}[Part {tc['level']}] Input: '{tc['input']}'; Submitted: '{answer}'; Correct: '{tc['output']}'")
 
     return all_passed
+
+
+def sample(answer_func: Callable[[str], Iterable[int]], year: int, day: int) -> bool:
+    print("👀 Looking for samples")
+    sample_data = load_sample()
+    if not sample_data:
+        print(f"{Fore.YELLOW}🫣 Could not find sample file.{Style.RESET_ALL}")
+        return True
+
+    sample_input, sample_output = sample_data
+
+    padded_sample_output = list(sample_output) + [-1] * 2
+    for part, (actual, expected) in enumerate(zip(answer_func(sample_input), padded_sample_output), 1):
+        print(f"{Fore.BLUE}🧮 Computed sample answer {actual} (expected {expected}) for part {part}.{Style.RESET_ALL}")
+        if actual != expected:
+            return False
+
+    return True
 
 
 def check_stars() -> int:
@@ -126,15 +157,19 @@ def handle_error_status(code: int) -> None:
 
 def run(answer_func: Callable[[str], Iterable[int]], test_cases=None):
     year, day = [int(v) for v in CURRENT_DIR.split('/')[-2:]]
-    problem_input = load_input(year, day)
+    print(f"{Fore.MAGENTA}Advent of Code {year}, Day {day}:{Style.RESET_ALL}")
+
+    if not sample(answer_func, year, day):
+        print(f"{Fore.RED}🧐 Got wrong answer for sample. Stopping.{Style.RESET_ALL}")
+        return
 
     if not test(answer_func, test_cases):
-        print("🤷‍♀️ You know the rules. Tests don't pass, YOU don't pass.")
+        print(f"{Fore.RED}🧪 Tests failed. Stopping.{Style.RESET_ALL}")
         return
 
     stars = check_stars()
 
-    print("🍾 Now looking to submit your answers 🍾")
+    problem_input = load_input(year, day)
     for part, answer in enumerate(answer_func(problem_input), 1):
         print(f"🧮 Computed answer {answer} for part {part} of day {day}")
         if stars < part:
