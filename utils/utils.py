@@ -158,6 +158,7 @@ def handle_error_status(code: int) -> None:
 def run(answer_func: Callable[[str], Iterable[int]], test_cases=None):
     year, day = [int(v) for v in CURRENT_DIR.split('/')[-2:]]
     print(f"{Fore.MAGENTA}Advent of Code {year}, Day {day}:{Style.RESET_ALL}")
+    problem_input = load_input(year, day)
 
     if not sample(answer_func, year, day):
         print(f"{Fore.RED}🧐 Got wrong answer for sample. Stopping.{Style.RESET_ALL}")
@@ -169,7 +170,6 @@ def run(answer_func: Callable[[str], Iterable[int]], test_cases=None):
 
     stars = check_stars()
 
-    problem_input = load_input(year, day)
     for part, answer in enumerate(answer_func(problem_input), 1):
         print(f"🧮 Computed answer {answer} for part {part} of day {day}")
         if stars < part:
