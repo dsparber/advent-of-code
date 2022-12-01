@@ -76,7 +76,7 @@ def submit(answer: int, level: int, year: int, day: int) -> None:
 
         if level == 1:
             print("Updated problem with part 2:\n\n")
-            print(fetch_and_save(year, day, 'problem'))
+            print(fetch_and_save(year, day, 'problem.md'))
     elif "not the right answer" in message.lower():
         print(f"{Fore.RED}❌ Wrong answer! For details:\n{Style.RESET_ALL}")
         print(message)
