@@ -52,7 +52,7 @@ def load_input(year: int, day: int) -> str:
         return file.read()
 
 
-def load_sample() -> Optional[Tuple[str, Iterable[int]]]:
+def load_sample() -> Optional[Tuple[str, Iterable[int | str]]]:
     path = f"{CURRENT_DIR}/sample"
     if not os.path.exists(path):
         return None
@@ -95,7 +95,7 @@ def save_stars(level: int) -> None:
         star_file.write(stars)
 
 
-def test(answer_func: Callable[[str], Iterable[int]], cases: list[dict]) -> bool:
+def test(answer_func: Callable[[str], Iterable[int | str]], cases: list[dict]) -> bool:
     all_passed = True
 
     if not cases:
@@ -105,15 +105,17 @@ def test(answer_func: Callable[[str], Iterable[int]], cases: list[dict]) -> bool
     for tc in cases:
         answer = answer_func(tc['input'])
         if str(tc['output']) == str(answer):
-            print(f"{Fore.GREEN}🎄 Test passed {Style.RESET_ALL}[Part {tc['level']}] Input: '{tc['input']}'; Output: '{tc['output']}'")
+            print(
+                f"{Fore.GREEN}🎄 Test passed {Style.RESET_ALL}[Part {tc['level']}] Input: '{tc['input']}'; Output: '{tc['output']}'")
         else:
             all_passed = False
-            print(f"{Fore.RED}🔥 Test failed {Style.RESET_ALL}[Part {tc['level']}] Input: '{tc['input']}'; Submitted: '{answer}'; Correct: '{tc['output']}'")
+            print(
+                f"{Fore.RED}🔥 Test failed {Style.RESET_ALL}[Part {tc['level']}] Input: '{tc['input']}'; Submitted: '{answer}'; Correct: '{tc['output']}'")
 
     return all_passed
 
 
-def sample(answer_func: Callable[[str], Iterable[int]], year: int, day: int) -> bool:
+def sample(answer_func: Callable[[str], Iterable[int | str]], year: int, day: int) -> bool:
     print("👀 Looking for samples")
     sample_data = load_sample()
     if not sample_data:
@@ -155,7 +157,7 @@ def handle_error_status(code: int) -> None:
             quit()
 
 
-def run(answer_func: Callable[[str], Iterable[int]], test_cases=None):
+def run(answer_func: Callable[[str], Iterable[int | str]], test_cases=None):
     year, day = [int(v) for v in CURRENT_DIR.split('/')[-2:]]
     print(f"{Fore.MAGENTA}Advent of Code {year}, Day {day}:{Style.RESET_ALL}")
     problem_input = load_input(year, day)
