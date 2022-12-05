@@ -60,7 +60,7 @@ def load_sample() -> Optional[Tuple[str, Iterable[int]]]:
     with open(path) as file:
         sample_date = file.read()
         sample_input, sample_output = sample_date.split('\n---\n')
-        return sample_input, [int(v) for v in sample_output.split('\n')]
+        return sample_input, [int(v) if v.isnumeric() else v for v in sample_output.split('\n')]
 
 
 def submit(answer: int, level: int, year: int, day: int) -> None:
