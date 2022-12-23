@@ -157,12 +157,14 @@ def handle_error_status(code: int) -> None:
             quit()
 
 
-def run(answer_func: Callable[[str], Iterable[int | str]], test_cases=None):
+def run(answer_func: Callable[[str], Iterable[int | str]], test_cases=None, skip_sample: bool = False,
+        submit_answer: bool = True,
+        parts: tuple[int] = (1, 2)):
     year, day = [int(v) for v in CURRENT_DIR.split('/')[-2:]]
     print(f"{Fore.MAGENTA}Advent of Code {year}, Day {day}:{Style.RESET_ALL}")
     problem_input = load_input(year, day)
 
-    if not sample(answer_func, year, day):
+    if not skip_sample and not sample(answer_func, year, day):
         print(f"{Fore.RED}🧐 Got wrong answer for sample. Stopping.{Style.RESET_ALL}")
         return
 
@@ -172,9 +174,11 @@ def run(answer_func: Callable[[str], Iterable[int | str]], test_cases=None):
 
     stars = check_stars()
 
-    for part, answer in enumerate(answer_func(problem_input), 1):
+    for part, answer in zip(parts, answer_func(problem_input)):
         print(f"🧮 Computed answer {answer} for part {part} of day {day}")
-        if stars < part:
+        if not submit_answer:
+            print(f"{Fore.BLUE}⏭️ Skipping submission.{Style.RESET_ALL}")
+        elif stars < part:
             submit(answer, part, year, day)
         else:
             print(f"{Fore.BLUE}⏭️ Already solved, skipping submission.{Style.RESET_ALL}")
