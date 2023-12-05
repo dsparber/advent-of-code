@@ -15,27 +15,22 @@ def solve(input_data: str) -> Iterable[int]:
 
     def compute_location(interval: Interval) -> int:
         for map_definition in maps:
+            identity = interval
+            mapped_intervals = Interval()
 
-            def transform(original: Interval) -> Interval:
-                identity = original
-                mapped_intervals = Interval()
+            for destination_start, source_start, length in map_definition:
+                source_interval = closed(source_start, source_start + length - 1)
 
-                for map_entry in map_definition:
-                    destination_start, source_start, length = map_entry
-                    source_interval = closed(source_start, source_start + length - 1)
+                # Subtract source interval from identity
+                identity = discretize_interval(identity - source_interval)
 
-                    # Subtract source interval from identity
-                    identity = discretize_interval(identity - source_interval)
+                # Offset relevant part of interval, add to mapped intervals
+                mapped_intervals |= offset_interval(
+                    source_interval.intersection(interval),
+                    destination_start - source_start,
+                )
 
-                    # Offset relevant part of interval, add to mapped intervals
-                    mapped_intervals |= offset_interval(
-                        source_interval.intersection(original),
-                        destination_start - source_start,
-                    )
-
-                return mapped_intervals.union(identity)
-
-            interval = transform(interval)
+            interval = mapped_intervals.union(identity)
 
         return interval.lower
 
