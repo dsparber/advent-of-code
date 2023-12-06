@@ -1,7 +1,5 @@
 import re
-from functools import reduce
-from math import sqrt, ceil, floor
-from operator import mul
+from math import sqrt, ceil, floor, prod
 from typing import Iterable
 
 from utils import run
@@ -19,7 +17,7 @@ def solve(input_data: str) -> Iterable[int]:
     times, distances = [
         list(map(int, re.split(r"\s+", line)[1:])) for line in input_data.split("\n")
     ]
-    yield reduce(mul, [wins(t, d) for t, d in zip(times, distances)], 1)
+    yield prod([wins(t, d) for t, d in zip(times, distances)])
 
     time, distance = [int("".join(map(str, numbers))) for numbers in [times, distances]]
     yield wins(time, distance)
