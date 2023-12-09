@@ -73,7 +73,7 @@ def load_samples() -> Iterable[Tuple[str, dict[int, int | str]]]:
                 int(v) if v.isnumeric() else v for v in sample_output.split("\n")
             ]
             if sample_file == "sample":
-                yield sample_input, dict(enumerate(sample_outputs))
+                yield sample_input, dict(enumerate(sample_outputs, 1))
             if sample_file.startswith("sample_1"):
                 yield sample_input, {1: sample_outputs[0]}
             if sample_file.startswith("sample_2"):
