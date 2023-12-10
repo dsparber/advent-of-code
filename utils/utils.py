@@ -72,12 +72,12 @@ def load_samples() -> Iterable[Tuple[str, dict[int, int | str]]]:
             sample_outputs = [
                 int(v) if v.isnumeric() else v for v in sample_output.split("\n")
             ]
-            if sample_file == "sample":
-                yield sample_input, dict(enumerate(sample_outputs, 1))
             if sample_file.startswith("sample_1"):
                 yield sample_input, {1: sample_outputs[0]}
-            if sample_file.startswith("sample_2"):
+            elif sample_file.startswith("sample_2"):
                 yield sample_input, {2: sample_outputs[0]}
+            else:
+                yield sample_input, dict(enumerate(sample_outputs, 1))
 
     if not any_samples:
         print(f"{Fore.YELLOW}🫣 Could not find any sample files.{Style.RESET_ALL}")
