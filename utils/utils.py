@@ -1,5 +1,6 @@
+import json
 import os
-from typing import Callable, Tuple, Iterable
+from typing import Callable, Tuple, Iterable, Optional
 
 import html2text
 import requests
@@ -84,9 +85,25 @@ def load_samples() -> Iterable[Tuple[str, dict[int, int | str]]]:
         return True
 
 
-def submit(answer: int, level: int, year: int, day: int) -> None:
+def check_answer_and_submit(answer: int, part: int, year: int, day: int) -> None:
+    state = load_state()
+    part_state = state[str(part)]
+    attempts = part_state["attempts"]
+
+    if part_state["solved"]:
+        log_correct_or_wrong(answer, part_state["solution"])
+        print(f"{Fore.BLUE}⏭️ Already solved, skipping submission.{Style.RESET_ALL}")
+        return
+
+    if answer in attempts:
+        print(f"{Fore.RED}❌ Already tried this value.{Style.RESET_ALL}")
+        print(f"{Fore.BLUE}⏭️ Skipping submission.{Style.RESET_ALL}")
+        return
+
+    attempts.append(answer)
+
     print(f"{Fore.BLUE}📬 Submitting solution now.{Style.RESET_ALL}")
-    data = {"level": str(level), "answer": str(answer)}
+    data = {"level": str(part), "answer": str(answer)}
     response = requests.post(
         f"https://adventofcode.com/{year}/day/{day}/answer", headers=HEADERS, data=data
     )
@@ -95,9 +112,10 @@ def submit(answer: int, level: int, year: int, day: int) -> None:
 
     if "that's the right answer" in message.lower():
         print(f"{Fore.GREEN}✅ Correct!{Style.RESET_ALL}")
-        save_stars(level)
+        part_state["solved"] = True
+        part_state["solution"] = answer
 
-        if level == 1:
+        if part == 1:
             print("Updated problem with part 2:\n\n")
             print(fetch_and_save(year, day, "problem.md"))
     elif "not the right answer" in message.lower():
@@ -107,15 +125,46 @@ def submit(answer: int, level: int, year: int, day: int) -> None:
         print(f"{Fore.YELLOW}🚫 You gave an answer too recently{Style.RESET_ALL}")
     elif "already complete it" in message.lower():
         print(f"{Fore.YELLOW}⚠️ You have already solved this.{Style.RESET_ALL}")
-        save_stars(level)
+
+        part_state["solved"] = True
+        part_state["solution"] = try_to_parse_solution(year, day, part)
+        log_correct_or_wrong(answer, part_state["solution"])
+
+    save_state(state)
 
 
-def save_stars(level: int) -> None:
-    star_path = os.getcwd()
-    with open(f"{star_path}/stars", "w+") as star_file:
-        stars = "*" * level
-        print(f"Writing '{stars}' to star file...")
-        star_file.write(stars)
+def log_correct_or_wrong(answer: [int | str], solution: Optional[int | str]) -> None:
+    if solution:
+        if solution == answer:
+            print(f"{Fore.GREEN}✅ Correct!{Style.RESET_ALL}")
+        else:
+            print(f"{Fore.RED}❌ Wrong! Should be: {solution}{Style.RESET_ALL}")
+
+
+def try_to_parse_solution(year: int, day: int, part: int) -> Optional[int | str]:
+    url = f"https://adventofcode.com/{year}/day/{day}"
+    response = requests.get(url, headers=HEADERS)
+    soup = BeautifulSoup(response.text, "html.parser")
+    solutions = [
+        text.replace(".", "").split(" ")[-1]
+        for p in soup.select("p")
+        if "Your puzzle answer was" in (text := p.text)
+    ]
+
+    index = part - 1
+    if index >= len(solutions):
+        return None
+
+    solution = solutions[index]
+    try:
+        return int(solution)
+    except ValueError:
+        return solution
+
+
+def save_state(state: dict) -> None:
+    with open(f"{os.getcwd()}/state.json", "w+") as state_file:
+        state_file.write(json.dumps(state, indent=2))
 
 
 def test(answer_func: Callable[[str], Iterable[int | str]], cases: list[dict]) -> bool:
@@ -161,15 +210,17 @@ def sample(answer_func: Callable[[str], Iterable[int | str]]) -> bool:
     return True
 
 
-def check_stars() -> int:
+def load_state() -> dict:
     star_path = os.getcwd()
-    star_file = f"{star_path}/stars"
-    if not os.path.exists(star_file):
-        return 0
+    state_file = f"{star_path}/state.json"
+    if not os.path.exists(state_file):
+        return {
+            "1": {"attempts": [], "solved": False, "solution": None},
+            "2": {"attempts": [], "solved": False, "solution": None},
+        }
 
-    with open(star_file, "r") as file:
-        stars = file.read().strip()
-        return len(stars)
+    with open(state_file) as file:
+        return json.loads(file.read())
 
 
 def handle_error_status(code: int) -> None:
@@ -185,6 +236,29 @@ def handle_error_status(code: int) -> None:
             quit()
 
 
+def solve_for_input(
+    answer_func: Callable[[str], Iterable[int | str]],
+    parts: object,
+    submit_answer: object,
+) -> None:
+    day, year = get_day_and_year()
+    problem_input = load_input(year, day)
+
+    print("\nComputing answers for input now:")
+    for part, answer in zip(parts, answer_func(problem_input)):
+        print(f"🧮 Computed answer {answer} for part {part} of day {day}")
+
+        if not submit_answer:
+            print(f"{Fore.BLUE}⏭️ Skipping submission.{Style.RESET_ALL}")
+
+        check_answer_and_submit(answer, part, year, day)
+
+
+def get_day_and_year() -> tuple[int, int]:
+    year, day = [int(v) for v in CURRENT_DIR.split("/")[-2:]]
+    return day, year
+
+
 def run(
     answer_func: Callable[[str], Iterable[int | str]],
     test_cases=None,
@@ -192,9 +266,8 @@ def run(
     submit_answer: bool = True,
     parts: tuple[int] = (1, 2),
 ):
-    year, day = [int(v) for v in CURRENT_DIR.split("/")[-2:]]
+    day, year = get_day_and_year()
     print(f"{Fore.MAGENTA}Advent of Code {year}, Day {day}:{Style.RESET_ALL}")
-    problem_input = load_input(year, day)
 
     if not skip_sample and not sample(answer_func):
         print(f"{Fore.RED}🧐 Got wrong answer for sample. Stopping.{Style.RESET_ALL}")
@@ -204,16 +277,4 @@ def run(
         print(f"{Fore.RED}🧪 Tests failed. Stopping.{Style.RESET_ALL}")
         return
 
-    stars = check_stars()
-
-    print("\nComputing answers for input now:")
-    for part, answer in zip(parts, answer_func(problem_input)):
-        print(f"🧮 Computed answer {answer} for part {part} of day {day}")
-        if not submit_answer:
-            print(f"{Fore.BLUE}⏭️ Skipping submission.{Style.RESET_ALL}")
-        elif stars < part:
-            submit(answer, part, year, day)
-        else:
-            print(
-                f"{Fore.BLUE}⏭️ Already solved, skipping submission.{Style.RESET_ALL}"
-            )
+    solve_for_input(answer_func, parts, submit_answer)
