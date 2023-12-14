@@ -269,6 +269,8 @@ def run(
     day, year = get_day_and_year()
     print(f"{Fore.MAGENTA}Advent of Code {year}, Day {day}:{Style.RESET_ALL}")
 
+    load_input(year, day)
+
     if not skip_sample and not sample(answer_func):
         print(f"{Fore.RED}🧐 Got wrong answer for sample. Stopping.{Style.RESET_ALL}")
         return
