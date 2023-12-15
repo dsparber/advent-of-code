@@ -19,8 +19,7 @@ def solve(input_data: str) -> Iterable[int]:
         if "-" in instruction:
             lens = instruction.replace("-", "")
             box_id = hash_value(lens)
-            if lens in boxes[box_id]:
-                boxes[box_id] = [l for l in boxes[box_id] if l != lens]
+            boxes[box_id] = [l for l in boxes[box_id] if l != lens]
         else:
             lens, focal_length = instruction.split("=")
             lenses[lens] = int(focal_length)
