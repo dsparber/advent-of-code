@@ -142,9 +142,19 @@ def check_answer_and_submit(answer: int, part: int, year: int, day: int) -> None
         print(f"{Fore.RED}❌ Wrong answer! For details:\n{Style.RESET_ALL}")
         print(message)
         if "too low" in message:
-            part_state["lower_bound"] = answer + 1
+            lower_bound = answer + 1
+            prev_lower_bound = part_state.get("lower_bound")
+            if prev_lower_bound:
+                part_state["lower_bound"] = max(lower_bound, prev_lower_bound)
+            else:
+                part_state["lower_bound"] = lower_bound
         if "too high" in message:
-            part_state["upper_bound"] = answer - 1
+            upper_bound = answer - 1
+            prev_upper_bound = part_state.get("upper_bound")
+            if prev_upper_bound:
+                part_state["upper_bound"] = min(upper_bound, prev_upper_bound)
+            else:
+                part_state["upper_bound"] = upper_bound
     elif "answer too recently" in message.lower():
         print(f"{Fore.YELLOW}🚫 You gave an answer too recently{Style.RESET_ALL}")
     elif "already complete it" in message.lower():
