@@ -1,6 +1,7 @@
 import json
 import os
 from copy import deepcopy
+from time import time
 from typing import Callable, Tuple, Iterable, Optional
 
 import html2text
@@ -243,10 +244,7 @@ def sample(answer_func: Callable[[str], Iterable[int | str]]) -> bool:
                 continue
 
             expected = sample_output[part]
-            print(
-                f"{Fore.BLUE}🧮 Computed sample answer {actual} "
-                f"(expected {expected}) for part {part}.{Style.RESET_ALL}"
-            )
+            log_correct_or_wrong(actual, expected)
             if actual != expected:
                 return False
 
@@ -296,8 +294,6 @@ def solve_for_input(
 
     print("\nComputing answers for input now:")
     for part, answer in zip(parts, answer_func(problem_input)):
-        print(f"🧮 Computed answer {answer} for part {part} of day {day}")
-
         if not submit_answer:
             print(f"{Fore.BLUE}⏭️ Skipping submission.{Style.RESET_ALL}")
 
@@ -309,6 +305,30 @@ def get_day_and_year() -> tuple[int, int]:
     return day, year
 
 
+def answer_func_with_timings(
+    answer_func: Callable[[str], Iterable[int | str]]
+) -> Callable[[str], Iterable[int | str]]:
+    day, year = get_day_and_year()
+
+    def run_answer_func_with_timings(input_data: str) -> Iterable[int | str]:
+        start_time = time()
+        for part, answer in enumerate(answer_func(input_data), 1):
+            end_time = time()
+            execution_time = end_time - start_time
+            time_str = (
+                f"{execution_time:.2f} s"
+                if execution_time > 1
+                else f"{execution_time * 1000:.2f} ms"
+            )
+            print(
+                f"🧮 Computed answer {answer} for part {part} of day {day} in {time_str}"
+            )
+            yield answer
+            start_time = time()
+
+    return run_answer_func_with_timings
+
+
 def run(
     answer_func: Callable[[str], Iterable[int | str]],
     test_cases=None,
@@ -318,6 +338,8 @@ def run(
 ):
     day, year = get_day_and_year()
     print(f"{Fore.MAGENTA}Advent of Code {year}, Day {day}:{Style.RESET_ALL}")
+
+    answer_func = answer_func_with_timings(answer_func)
 
     load_input(year, day)
 
