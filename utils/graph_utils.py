@@ -8,10 +8,15 @@ def dijkstra[
 ](
     start: T,
     get_neighbors: Callable[[T], Iterable[tuple[N, T]]],
-    is_target: Callable[[T], bool],
+    target_or_target_predicate: [T | Callable[[T], bool]],
 ) -> N:
     priority_queue = [(0, start)]
     distances = {start: 0}
+
+    def is_target(node: T) -> bool:
+        if isinstance(target_or_target_predicate, Callable):
+            return target_or_target_predicate(node)
+        return target_or_target_predicate == node
 
     while priority_queue:
         distance_current, current = heappop(priority_queue)
