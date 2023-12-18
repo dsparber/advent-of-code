@@ -80,7 +80,9 @@ def load_samples() -> Iterable[Tuple[str, dict[int, int | str]]]:
             elif sample_file.startswith("sample_2"):
                 yield sample_input, {2: sample_outputs[0]}
             else:
-                yield sample_input, dict(enumerate(sample_outputs, 1))
+                yield sample_input, dict(
+                    enumerate(filter(lambda x: bool(x), sample_outputs), 1)
+                )
 
     if not any_samples:
         print(f"{Fore.YELLOW}🫣 Could not find any sample files.{Style.RESET_ALL}")
@@ -211,28 +213,6 @@ def save_state(state: dict) -> None:
         state_file.write(json.dumps(state, indent=2))
 
 
-def test(answer_func: Callable[[str], Iterable[int | str]], cases: list[dict]) -> bool:
-    all_passed = True
-
-    if not cases:
-        print(f"{Fore.YELLOW}🤷 No test cases defined.{Style.RESET_ALL}")
-        return all_passed
-
-    for tc in cases:
-        answer = answer_func(tc["input"])
-        if str(tc["output"]) == str(answer):
-            print(
-                f"{Fore.GREEN}🎄 Test passed {Style.RESET_ALL}[Part {tc['level']}] Input: '{tc['input']}'; Output: '{tc['output']}'"
-            )
-        else:
-            all_passed = False
-            print(
-                f"{Fore.RED}🔥 Test failed {Style.RESET_ALL}[Part {tc['level']}] Input: '{tc['input']}'; Submitted: '{answer}'; Correct: '{tc['output']}'"
-            )
-
-    return all_passed
-
-
 def sample(answer_func: Callable[[str], Iterable[int | str]]) -> bool:
     print("\nLooking for samples:")
 
@@ -241,6 +221,9 @@ def sample(answer_func: Callable[[str], Iterable[int | str]]) -> bool:
 
         for part, actual in enumerate(answer_func(sample_input), 1):
             if part not in sample_output:
+                print(
+                    f"{Fore.YELLOW}🤷 No sample solution for part {part}.{Style.RESET_ALL}"
+                )
                 continue
 
             expected = sample_output[part]
@@ -331,7 +314,6 @@ def answer_func_with_timings(
 
 def run(
     answer_func: Callable[[str], Iterable[int | str]],
-    test_cases=None,
     skip_sample: bool = False,
     submit_answer: bool = True,
     parts: tuple[int] = (1, 2),
@@ -345,10 +327,6 @@ def run(
 
     if not skip_sample and not sample(answer_func):
         print(f"{Fore.RED}🧐 Got wrong answer for sample. Stopping.{Style.RESET_ALL}")
-        return
-
-    if not test(answer_func, test_cases):
-        print(f"{Fore.RED}🧪 Tests failed. Stopping.{Style.RESET_ALL}")
         return
 
     solve_for_input(answer_func, parts, submit_answer)
