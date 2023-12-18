@@ -62,8 +62,6 @@ def solve(input_data: str) -> Iterable[int]:
 
         return len(tiles_directions.keys())
 
-    # visualize_grid(cols, grid, rows, tiles_directions)
-
     yield solve_for_start(((0, 0), right))
 
     possible_starts = (
@@ -73,30 +71,6 @@ def solve(input_data: str) -> Iterable[int]:
         + [((rows - 1, j), up) for j in range(cols)]
     )
     yield max(map(solve_for_start, possible_starts))
-
-
-def visualize_grid(cols, grid, rows, tiles_directions):
-    string = ""
-    for i in range(rows):
-        string += "\n"
-        for j in range(cols):
-            if (i, j) in tiles_directions:
-                length = len(tiles_directions[i, j])
-                if length == 1:
-                    direction = tiles_directions[i, j][0]
-                    if direction == up:
-                        string += "^"
-                    if direction == down:
-                        string += "v"
-                    if direction == left:
-                        string += "<"
-                    if direction == right:
-                        string += ">"
-                else:
-                    string += str(length)
-            else:
-                string += grid[(i, j)]
-    print(string)
 
 
 run(solve)
