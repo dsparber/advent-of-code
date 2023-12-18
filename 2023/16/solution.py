@@ -2,16 +2,13 @@ from collections import defaultdict
 from typing import Iterable
 
 from utils import run
-from utils.grid_utils import parse_char_grid_as_dict
-
-up = -1, 0
-down = 1, 0
-left = 0, -1
-right = 0, 1
+from utils.grid import Grid
+from utils.directions import up, down, left, right
 
 
 def solve(input_data: str) -> Iterable[int]:
-    grid, rows, cols = parse_char_grid_as_dict(input_data)
+    grid = Grid.parse_char_matrix(input_data)
+    rows, cols = grid.rows, grid.cols
 
     def solve_for_start(start: tuple[tuple[int, int], tuple[int, int]]) -> int:
         tiles_directions = defaultdict(list)
