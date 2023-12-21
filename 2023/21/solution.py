@@ -1,5 +1,7 @@
 from typing import Iterable
 
+from numpy import polyfit, polyval
+
 from utils import run
 from utils.grid import Grid
 
@@ -27,16 +29,13 @@ def num_reachable(grid: Grid, steps: int) -> int:
         }
         num_positions[step] = len(new_positions) + num_positions.get(step - 2, 0)
 
-    # Decompose: steps = kn + r
     n = grid.rows
-    k, r = steps // n, steps % n
+    r = steps % n
 
-    positions_1n_r = num_positions[n + r]
-    positions_2n_r = num_positions[2 * n + r]
-    d1 = positions_2n_r - positions_1n_r
-    d2 = positions_2n_r + num_positions[r] - 2 * positions_1n_r
+    x_values = [r, n + r, 2 * n + r]
 
-    return positions_2n_r + (k - 2) * (d1 + (k - 1) * d2 // 2)
+    coefficients = polyfit(x_values, [num_positions[x] for x in x_values], 2)
+    return round(polyval(coefficients, steps))
 
 
 run(solve)
