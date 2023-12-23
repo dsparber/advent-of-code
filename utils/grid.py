@@ -42,8 +42,11 @@ class Grid[T]:
         candidates = [(i + di, j + dj) for di, dj in allowed_directions]
         return filter(self.is_within_bounds, candidates)
 
-    def find(self, value: T) -> Optional[tuple[int, int]]:
-        candidates = [k for k, v in self.values.items() if v == value]
+    def find(self, value: T, row: Optional[int] = None) -> Optional[tuple[int, int]]:
+        possibilities = self.values.items()
+        if row is not None:
+            possibilities = (((i, j), v) for (i, j), v in possibilities if i == row)
+        candidates = [k for k, v in possibilities if v == value]
         return candidates[0] if candidates else None
 
     def __str__(self) -> str:

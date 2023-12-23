@@ -2,7 +2,7 @@ import json
 import os
 from copy import deepcopy
 from time import time
-from typing import Callable, Tuple, Iterable, Optional
+from typing import Callable, Tuple, Iterable, Optional, Sequence
 
 import html2text
 import requests
@@ -217,13 +217,15 @@ def save_state(state: dict) -> None:
         state_file.write(json.dumps(state, indent=2))
 
 
-def sample(answer_func: Callable[[str], Iterable[int | str]]) -> bool:
+def sample(
+    answer_func: Callable[[str], Iterable[int | str]], parts: Sequence[int]
+) -> bool:
     print("\nLooking for samples:")
 
     for sample in load_samples():
         sample_input, sample_output = sample
 
-        for part, actual in enumerate(answer_func(sample_input), 1):
+        for part, actual in zip(parts, answer_func(sample_input)):
             if part not in sample_output:
                 print(
                     f"{Fore.YELLOW}🤷 No sample solution for part {part}.{Style.RESET_ALL}"
@@ -273,7 +275,7 @@ def handle_error_status(code: int) -> None:
 
 def solve_for_input(
     answer_func: Callable[[str], Iterable[int | str]],
-    parts: tuple[int],
+    parts: Sequence[int],
     submit_answer: bool,
 ) -> None:
     day, year = get_day_and_year()
@@ -295,7 +297,7 @@ def get_day_and_year() -> tuple[int, int]:
 def answer_func_with_timings(
     answer_func: Callable[[str], Iterable[int | str]]
 ) -> Callable[[str], Iterable[int | str]]:
-    day, year = get_day_and_year()
+    day, _ = get_day_and_year()
 
     def run_answer_func_with_timings(input_data: str) -> Iterable[int | str]:
         start_time = time()
@@ -320,7 +322,7 @@ def run(
     answer_func: Callable[[str], Iterable[int | str]],
     skip_sample: bool = False,
     submit_answer: bool = True,
-    parts: tuple[int] = (1, 2),
+    parts: Sequence[int] = (1, 2),
 ):
     day, year = get_day_and_year()
     print(f"{Fore.MAGENTA}Advent of Code {year}, Day {day}:{Style.RESET_ALL}")
@@ -329,7 +331,7 @@ def run(
 
     load_input(year, day)
 
-    if not skip_sample and not sample(answer_func):
+    if not skip_sample and not sample(answer_func, parts):
         print(f"{Fore.RED}🧐 Got wrong answer for sample. Stopping.{Style.RESET_ALL}")
         return
 
