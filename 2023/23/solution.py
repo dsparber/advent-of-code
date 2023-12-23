@@ -19,7 +19,7 @@ def find_longest_path(grid: Grid, restrict_directions: bool = True) -> int:
     end = grid.find(".", row=grid.rows - 1)
 
     max_length = 0
-    queue = [(start, tuple(), 0)]
+    queue = [(start, set(), 0)]
 
     while queue:
         current, path, distance = queue.pop()
@@ -29,7 +29,7 @@ def find_longest_path(grid: Grid, restrict_directions: bool = True) -> int:
 
         for neighbor, neighbor_distance in graph[current]:
             if neighbor not in path:
-                extended_path = path + (neighbor,)
+                extended_path = path.union({neighbor})
                 queue.append((neighbor, extended_path, distance + neighbor_distance))
 
     return max_length
