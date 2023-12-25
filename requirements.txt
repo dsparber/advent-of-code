@@ -6,6 +6,8 @@ python-dotenv==1.0.0
 html2text==2020.1.16
 
 portion==2.4.2
+networkx==3.2.1
 
 numpy==1.26.2
 sympy==1.12
+
